@@ -1,38 +1,34 @@
 package org.bnp.id.controller;
 
+import org.bnp.id.config.DBConfig;
 import org.bnp.id.constants.StringConstants;
 import org.bnp.id.model.field.Address;
 import org.bnp.id.model.info.Parish;
 import org.springframework.context.annotation.Bean;
 
-import java.beans.BeanProperty;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.HashSet;
 
+
 public class DBController {
 
-    private static DBController _instance = new DBController();
+    private static DBController instance = new DBController();
 
-    private String host;
-
-    private String port;
-
-    private String db;
-
-    private String username;
-
-    private String password;
+    private DBConfig config = DBConfig.getInstance();
 
     private DBController() {
+
     }
 
     @Bean
     public static DBController getInstance() {
-        return _instance;
+
+        return instance;
     }
 
     public HashMap<Integer, String> getCountriesMap() {
+
         HashMap<Integer, String> map = null;
 
         try {
@@ -41,7 +37,7 @@ public class DBController {
             System.err.println(e.getMessage());
         }
 
-        try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/bnpid", "root", "root123")) {
+        try (Connection con = config.getConnection()) {
 
             Statement stmt = con.createStatement();
             ResultSet result = stmt.executeQuery("select * from country");
@@ -65,6 +61,7 @@ public class DBController {
     }
 
     public HashSet<String> getLastNames() {
+
         HashSet<String> set = null;
 
         try {
@@ -99,6 +96,7 @@ public class DBController {
     }
 
     public HashSet<String> getLastNames(String firstName, String middleName) {
+
         HashSet<String> set = null;
 
         try {
@@ -133,6 +131,7 @@ public class DBController {
     }
 
     public HashMap<String, Parish> getParishes() {
+
         HashMap<String, Parish> map = null;
 
         try {
@@ -153,9 +152,8 @@ public class DBController {
             map = new HashMap<>();
 
             while (result.next()) {
-                address = new Address(result.getString("street"), result.getString("city"),
-                        result.getString("state"), result.getString("country"),
-                        result.getInt("zip"));
+                address = new Address(result.getString("street"), result.getString("city"), result.getString("state"), result.getString("country"),
+                    result.getInt("zip"));
 
                 name = result.getString("name");
 
@@ -175,6 +173,7 @@ public class DBController {
     }
 
     public boolean addParish(Parish parish) {
+
         boolean ret;
 
         try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/bnpid", "root", "root123")) {
@@ -196,8 +195,7 @@ public class DBController {
 
             stmt.close();
         } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to add parish ("
-                    + parish.toString() + "): " + e.getMessage());
+            System.err.println("Error " + e.getErrorCode() + " while attempting to add parish (" + parish.toString() + "): " + e.getMessage());
             ret = false;
         }
 
@@ -205,6 +203,7 @@ public class DBController {
     }
 
     public int updateParish(Parish parish, String newName, Address newAddress) {
+
         int ret = 0;
         boolean nameUpdated = false;
 
@@ -245,14 +244,14 @@ public class DBController {
 
             stmt.close();
         } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to update parish ("
-                    + parish.toString() + "): " + e.getMessage());
+            System.err.println("Error " + e.getErrorCode() + " while attempting to update parish (" + parish.toString() + "): " + e.getMessage());
         }
 
         return ret;
     }
 
     public int deleteParish(Parish parish) {
+
         int ret = 0;
 
         try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/bnpid", "root", "root123")) {
@@ -275,8 +274,7 @@ public class DBController {
 
             stmt.close();
         } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to delete parish ("
-                    + parish.toString() + "): " + e.getMessage());
+            System.err.println("Error " + e.getErrorCode() + " while attempting to delete parish (" + parish.toString() + "): " + e.getMessage());
         }
 
         return ret;

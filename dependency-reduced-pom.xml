@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bnp</groupId>
-  <artifactId>bnpid_maven</artifactId>
+  <artifactId>bnpid</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
   <build>
@@ -44,11 +44,12 @@
     </dependency>
   </dependencies>
   <properties>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <lombok-version>1.18.4</lombok-version>
-    <maven.compiler.source>1.8</maven.compiler.source>
     <spring-version>5.2.6.RELEASE</spring-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <lombok-version>1.18.4</lombok-version>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven-version>3.6.3</maven-version>
   </properties>
 </project>
 
