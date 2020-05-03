@@ -1,7 +1,6 @@
 package org.bnp.id.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
@@ -12,8 +11,6 @@ import java.sql.SQLException;
 @Configuration
 @PropertySource(value = "classpath:conf/db.properties")
 public class DBConfig {
-
-    private static DBConfig instance = new DBConfig();
 
     @Value("${db.host}")
     private String host;
@@ -32,12 +29,6 @@ public class DBConfig {
 
     private String url = String.format("jdbc:mysql://%s:%s/%s", host, port, db);
 
-    public static DBConfig getInstance() {
-
-        return instance;
-    }
-
-    @Bean
     public Connection getConnection() throws SQLException {
 
         return DriverManager.getConnection(url, username, password);

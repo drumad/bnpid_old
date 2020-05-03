@@ -13,13 +13,13 @@ public class Country {
 
     private String iso;
 
-    private String iso3;
-
     private String name;
 
     private String niceName;
 
-    private String numCode;
+    private String iso3;
 
-    private String phoneCode;
+    private Integer numCode;
+
+    private Integer phoneCode;
 }

@@ -4,6 +4,7 @@ CREATE TABLE members
     `barcodeid`               varchar(12)  DEFAULT NULL,
     `last_name`               varchar(50)  DEFAULT NULL,
     `first_name`              varchar(50)  DEFAULT NULL,
+    `middle_name`             varchar(50)  DEFAULT NULL,
     `address`                 varchar(150) DEFAULT NULL,
     `city`                    varchar(50)  DEFAULT NULL,
     `state`                   varchar(50)  DEFAULT NULL,
@@ -25,6 +26,7 @@ CREATE TABLE members
     `contactid`               int          DEFAULT NULL,
     `sponsorid`               int          DEFAULT NULL,
     `chapterid`               int          DEFAULT NULL,
+    `parishid`                int          DEFAULT NULL,
     `dateAdorer`              datetime     DEFAULT NULL,
     `dateHirang`              datetime     DEFAULT NULL,
     `dateCouncil`             datetime     DEFAULT NULL,
@@ -32,5 +34,6 @@ CREATE TABLE members
     PRIMARY KEY (id),
     FOREIGN KEY (contactid) REFERENCES members (id),
     FOREIGN KEY (sponsorid) REFERENCES members (id),
-    FOREIGN KEY (chapterid) REFERENCES chapter_info (id)
+    FOREIGN KEY (chapterid) REFERENCES chapter_info (id),
+    FOREIGN KEY (parishid) REFERENCES parish (id)
 );

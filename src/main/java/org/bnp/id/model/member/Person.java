@@ -52,4 +52,8 @@ public class Person {
     private Parish parish;
 
     private Boolean briefedAboutBnp;
+
+    private Date dateCreated;
+
+    private Date dateModified;
 }

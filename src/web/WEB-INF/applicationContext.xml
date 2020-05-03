@@ -3,8 +3,17 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
+    <bean id="dbConfig" class="org.bnp.id.config.DBConfig"/>
 
-    <bean id="dbController" class="org.bnp.id.controller.DBController" />
+    <bean id="dbController" class="org.bnp.id.controller.DBController">
+        <property name="config" ref="dbConfig"/>
+    </bean>
 
+    <bean id="parishController" class="org.bnp.id.controller.ParishController">
+        <property name="config" ref="dbConfig"/>
+    </bean>
 
+    <bean id="memberController" class="org.bnp.id.controller.MemberController">
+        <property name="dbController" ref="dbController"/>
+    </bean>
 </beans>
