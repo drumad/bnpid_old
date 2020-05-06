@@ -1,36 +1,45 @@
 package org.bnp.id.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-@Configuration
-@PropertySource(value = "classpath:conf/db.properties")
+@AllArgsConstructor
+@Log4j
 public class DBConfig {
 
-    @Value("${db.host}")
+    private static Connection connection;
+
     private String host;
 
-    @Value("${db.port}")
     private String port;
 
-    @Value("${db.name}")
     private String db;
 
-    @Value("${db.username}")
     private String username;
 
-    @Value("${db.password}")
     private String password;
-
-    private String url = String.format("jdbc:mysql://%s:%s/%s", host, port, db);
 
     public Connection getConnection() throws SQLException {
 
-        return DriverManager.getConnection(url, username, password);
+        if (connection == null || connection.isClosed()) {
+            createConnection();
+        }
+        return connection;
+    }
+
+    private void createConnection() throws SQLException {
+
+        try {
+            log.debug("Connecting to database..");
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            String url = String.format("jdbc:mysql://%s:%s/%s", host, port, db);
+            connection = DriverManager.getConnection(url, username, password);
+        } catch (ClassNotFoundException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 }

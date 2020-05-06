@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bnp.id.model.field.Address;
+import org.bnp.id.util.AddressUtil;
 
 import java.util.Date;
 
@@ -25,6 +26,6 @@ public class Parish {
     @Override
     public String toString() {
 
-        return this.getName();
+        return String.format("%d | %d", name, AddressUtil.convert(address));
     }
 }

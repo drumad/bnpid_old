@@ -3,14 +3,28 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="dbConfig" class="org.bnp.id.config.DBConfig"/>
+    <bean id="dbProperties" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="classpath:conf/db.properties"/>
+    </bean>
+
+    <bean id="dbConfig" class="org.bnp.id.config.DBConfig">
+        <constructor-arg name="host" value="${db.host}"/>
+        <constructor-arg name="port" value="${db.port}"/>
+        <constructor-arg name="db" value="${db.name}"/>
+        <constructor-arg name="username" value="${db.username}"/>
+        <constructor-arg name="password" value="${db.password}"/>
+    </bean>
 
     <bean id="dbController" class="org.bnp.id.controller.DBController">
         <property name="config" ref="dbConfig"/>
     </bean>
 
+    <bean id="parishService" class="org.bnp.id.service.impl.ParishServiceImpl">
+        <constructor-arg name="config" ref="dbConfig"/>
+    </bean>
+
     <bean id="parishController" class="org.bnp.id.controller.ParishController">
-        <property name="config" ref="dbConfig"/>
+        <constructor-arg name="parishService" ref="parishService"/>
     </bean>
 
     <bean id="memberController" class="org.bnp.id.controller.MemberController">

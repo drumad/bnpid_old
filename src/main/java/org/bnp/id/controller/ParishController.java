@@ -1,37 +1,39 @@
 package org.bnp.id.controller;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
-import org.bnp.id.config.DBConfig;
-import org.bnp.id.constants.StringConstants;
-import org.bnp.id.exception.ParishNotFoundException;
-import org.bnp.id.model.field.Address;
+import lombok.extern.log4j.Log4j;
 import org.bnp.id.model.info.Parish;
-import org.bnp.id.util.AddressUtil;
+import org.bnp.id.service.ParishService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-@Getter
-@Setter
+@AllArgsConstructor
 @RestController
+@Log4j
 public class ParishController {
 
-    private Parish model;
+    @Getter
+    private static Map<Integer, Parish> parishes = null;
 
-    private Map<Integer, String> countryMap;
+    private ParishService parishService;
 
-    private DBConfig config;
+    public void loadParishes() {
 
-    private DBController dbController;
+        if (parishes != null) {
+            parishes.clear();
+        }
+        parishes = parishService.findAll().stream().collect(Collectors.toMap(Parish::getId, Function.identity()));
+    }
 
-    @RequestMapping("/parish")
+    @RequestMapping(value = "/parish", produces = MediaType.TEXT_PLAIN_VALUE)
     public String view() {
 
         return "Hello Parish World!";
@@ -40,159 +42,53 @@ public class ParishController {
     @GetMapping("/parish/{id}")
     public Parish getParish(@PathVariable Integer id) {
 
-        Parish ret = null;
+        return parishService.findbyId(id);
+    }
 
-        try (Connection con = config.getConnection()) {
+    @GetMapping("/parish/{name}")
+    public Collection<Parish> getParish(@PathVariable String name) {
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("select * from parish where id = ").append(id);
-
-            ResultSet result = stmt.executeQuery(sql.toString());
-            if (result.next()) {
-                ret = new Parish();
-                ret.setId(result.getInt("id"));
-                ret.setName(result.getString("name"));
-                ret.setAddress(AddressUtil.convert(result.getString("address")));
-                ret.setDateCreated(result.getDate("date_created"));
-                ret.setDateUpdated(result.getDate("date_updated"));
-            } else {
-                System.err.println("No parish found with id " + id);
-            }
-
-            result.close();
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to get parish with id " + id);
-            throw new ParishNotFoundException(id);
-        }
-
-        return ret;
+        return parishService.findbyName(name);
     }
 
     @GetMapping("/parish/list")
-    public List<Parish> getParishes() {
+    public ResponseEntity<Collection<Parish>> getParishes() {
 
-        List<Parish> ret = new ArrayList<>();
-
-        try (Connection con = config.getConnection()) {
-
-            Statement stmt = con.createStatement();
-            String sql = "select * from parish";
-
-            ResultSet result = stmt.executeQuery(sql);
-
-            while (result.next()) {
-                Parish temp = new Parish();
-                temp.setId(result.getInt("id"));
-                temp.setName(result.getString("name"));
-                temp.setAddress(AddressUtil.convert(result.getString("address")));
-                temp.setDateCreated(result.getDate("date_created"));
-                temp.setDateUpdated(result.getDate("date_updated"));
-
-                ret.add(temp);
+        try {
+            loadParishes();
+            if (parishes.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-
-            result.close();
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to get the list of parishes");
+        } catch (RuntimeException e) {
+            log.error(e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        return ret;
+        return new ResponseEntity<>(parishes.values(), HttpStatus.OK);
     }
 
     @PostMapping("/parish")
-    public boolean addParish(@RequestBody Parish parish) {
+    public ResponseEntity<Parish> addParish(@RequestBody Parish parish) {
 
-        boolean ret;
+        int id = parishService.save(parish);
 
-        try (Connection con = config.getConnection()) {
+        loadParishes();
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("insert into parish (name, address) values ('");
-            sql.append(parish.getName()).append("', '");
-            sql.append(AddressUtil.convert(parish.getAddress()));
-            sql.append(")");
-
-            System.out.println("Query: " + sql.toString());
-
-            ret = stmt.execute(sql.toString());
-
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to add parish (" + parish.toString() + "): " + e.getMessage());
-            ret = false;
-        }
-
-        return ret;
+        return new ResponseEntity<>(parishes.get(id), HttpStatus.OK);
     }
 
     @PutMapping("/parish/{id}")
-    public int updateParish(@PathVariable Integer id, @RequestBody Parish parish) {
+    public ResponseEntity<Parish> updateParish(@PathVariable Integer id, @RequestBody Parish parish) {
 
-        int ret = 0;
-        boolean nameUpdated = false;
-
-        try (Connection con = config.getConnection()) {
-
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("UPDATE parish SET ");
-
-            String newName = parish.getName();
-            Address newAddress = parish.getAddress();
-
-            if (!parish.getName().equals(newName)) {
-                sql.append("`name`='").append(newName).append("' ");
-                nameUpdated = true;
-            }
-
-            if (!parish.getAddress().equals(newAddress)) {
-                if (nameUpdated) {
-                    sql.append(StringConstants.COMMA_SPACE);
-                }
-                sql.append("`address`='").append(newAddress.toString()).append("' ");
-            }
-
-            sql.append("WHERE `id` = ").append(id);
-
-            System.out.println("Query: " + sql.toString());
-
-            ret = stmt.executeUpdate(sql.toString());
-
-            stmt.close();
-        } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to update parish (" + parish.toString() + "): " + e.getMessage());
-        }
-
-        return ret;
+        parishService.update(parish);
+        return new ResponseEntity<>(parish, HttpStatus.OK);
     }
 
     @DeleteMapping("/employees/{id}")
-    public int deleteParish(@PathVariable Integer id) {
+    public void deleteParish(@PathVariable Integer id) {
 
-        int ret = 0;
+        parishService.deleteById(id);
 
-        try (Connection con = config.getConnection()) {
-
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("DELETE FROM parish ");
-            sql.append("WHERE `id` = ").append(id);
-
-            System.out.println("Query: " + sql.toString());
-
-            ret = stmt.executeUpdate(sql.toString());
-            stmt.close();
-
-            dbController.getParishes().remove(id);
-
-        } catch (SQLException e) {
-            System.err.println("Error " + e.getErrorCode() + " while attempting to delete parish with id (" + id + "): " + e.getMessage());
-        }
-
-        return ret;
+        loadParishes();
     }
 }

@@ -2,10 +2,10 @@ package org.bnp.id.controller;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 import org.bnp.id.config.DBConfig;
 import org.bnp.id.model.info.Country;
 import org.bnp.id.model.info.Parish;
-import org.bnp.id.util.AddressUtil;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -16,6 +16,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+@Log4j
 public class DBController {
 
     private DBConfig config;
@@ -26,8 +27,7 @@ public class DBController {
 
     public DBController() {
 
-        loadCountries();
-        loadParishes();
+        //loadCountries();
     }
 
     /**
@@ -37,10 +37,12 @@ public class DBController {
 
         HashMap<Integer, Country> map = null;
 
+        log.debug("Loading countries..");
+
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
-            System.err.println(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         try (Connection con = config.getConnection()) {
@@ -67,48 +69,9 @@ public class DBController {
             stmt.close();
 
         } catch (SQLException e) {
-            System.err.println(e.getMessage());
+            log.error(e.getMessage(), e);
         }
 
         countries = map;
-    }
-
-    public void loadParishes() {
-
-        HashMap<Integer, Parish> map = null;
-
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            System.err.println(e.getMessage());
-        }
-
-        try (Connection con = config.getConnection()) {
-
-            Statement stmt = con.createStatement();
-            ResultSet result = stmt.executeQuery("select * from parish");
-
-            Parish parish;
-            map = new HashMap<>();
-
-            while (result.next()) {
-                parish = new Parish();
-                parish.setId(result.getInt("id"));
-                parish.setName(result.getString("name"));
-                parish.setAddress(AddressUtil.convert(result.getString("address")));
-                parish.setDateCreated(result.getTimestamp("date_created"));
-                parish.setDateUpdated(result.getTimestamp("date_updated"));
-
-                map.put(parish.getId(), parish);
-            }
-
-            result.close();
-            stmt.close();
-
-        } catch (SQLException e) {
-            System.err.println(e.getMessage());
-        }
-
-        parishes = map;
     }
 }
