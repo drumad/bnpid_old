@@ -15,11 +15,16 @@
         <constructor-arg name="password" value="${db.password}"/>
     </bean>
 
-    <bean id="dbController" class="org.bnp.id.controller.DBController">
-        <property name="config" ref="dbConfig"/>
+    <bean id="countryController" class="org.bnp.id.controller.CountryController">
+        <constructor-arg name="countryService" ref="countryService"/>
     </bean>
 
     <bean id="parishService" class="org.bnp.id.service.impl.ParishServiceImpl">
+        <constructor-arg name="config" ref="dbConfig"/>
+        <constructor-arg name="addressUtil" ref="addressUtil"/>
+    </bean>
+
+    <bean id="countryService" class="org.bnp.id.service.impl.CountryServiceImpl">
         <constructor-arg name="config" ref="dbConfig"/>
     </bean>
 
@@ -27,7 +32,7 @@
         <constructor-arg name="parishService" ref="parishService"/>
     </bean>
 
-    <bean id="memberController" class="org.bnp.id.controller.MemberController">
-        <property name="dbController" ref="dbController"/>
+    <bean id="addressUtil" class="org.bnp.id.util.AddressUtil">
+        <constructor-arg name="countryController" ref="countryController"/>
     </bean>
 </beans>

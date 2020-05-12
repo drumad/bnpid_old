@@ -1,18 +1,58 @@
 package org.bnp.id.util;
 
+import org.bnp.id.controller.CountryController;
 import org.bnp.id.model.field.Address;
+import org.bnp.id.model.info.Country;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AddressUtilTest {
+
+    private Country country;
+
+    private Map<String, Country> map;
+
+    private AddressUtil addressUtil;
+
+    @Mock
+    private CountryController countryController;
+
+    @Before
+    public void setUp() {
+
+        country = new Country();
+        country.setId(227);
+        country.setIso("US");
+        country.setName("UNITED STATES");
+        country.setNiceName("United States");
+        country.setIso3("United States");
+        country.setNumCode(840);
+        country.setPhoneCode(1);
+
+        map = new HashMap<>(1);
+        map.put("United States", country);
+
+        when(countryController.getCountries()).thenReturn(map);
+
+        addressUtil = new AddressUtil(countryController);
+    }
 
     @Test
     public void test_convert_string_success() {
 
-        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, "USA");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., Claremont, California 91711, USA");
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont, California 91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -20,16 +60,16 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_success() {
 
-        String expected = "4089 Chaminade Ct., Claremont, California 91711, USA";
-        Address actual = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, "USA");
+        String expected = "4089 Chaminade Ct., Claremont, California 91711, United States";
+        Address actual = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, country);
 
-        assertEquals(expected, AddressUtil.convert(actual));
+        assertEquals(expected, addressUtil.convert(actual));
     }
 
     @Test
     public void test_convert_nullString() {
 
-        Address actual = AddressUtil.convert((String) null);
+        Address actual = addressUtil.convert((String) null);
 
         assertNull(actual.getStreet());
         assertNull(actual.getCity());
@@ -43,7 +83,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_nullAddress() {
 
-        String actual = AddressUtil.convert((Address) null);
+        String actual = addressUtil.convert((Address) null);
 
         assertEquals(", , ,", actual);
     }
@@ -51,7 +91,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_string_blankString() {
 
-        Address actual = AddressUtil.convert("");
+        Address actual = addressUtil.convert("");
 
         assertNull(actual.getStreet());
         assertNull(actual.getCity());
@@ -64,7 +104,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_emptyAddress() {
 
-        String actual = AddressUtil.convert(new Address());
+        String actual = addressUtil.convert(new Address());
 
         assertEquals(", , ,", actual);
     }
@@ -72,8 +112,8 @@ public class AddressUtilTest {
     @Test
     public void test_convert_string_nullStreet() {
 
-        Address expected = new Address(null, "Claremont", "California", 91711, "USA");
-        Address actual = AddressUtil.convert(", Claremont, California 91711, USA");
+        Address expected = new Address(null, "Claremont", "California", 91711, country);
+        Address actual = addressUtil.convert(", Claremont, California 91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -81,16 +121,16 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_nullStreet() {
 
-        String actual = AddressUtil.convert(new Address(null, "Claremont", "California", 91711, "USA"));
+        String actual = addressUtil.convert(new Address(null, "Claremont", "California", 91711, country));
 
-        assertEquals(", Claremont, California 91711, USA", actual);
+        assertEquals(", Claremont, California 91711, United States", actual);
     }
 
     @Test
     public void test_convert_string_emptyStreet() {
 
-        Address expected = new Address("", "Claremont", "California", 91711, "USA");
-        Address actual = AddressUtil.convert(", Claremont, California 91711, USA");
+        Address expected = new Address("", "Claremont", "California", 91711, country);
+        Address actual = addressUtil.convert(", Claremont, California 91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -98,9 +138,9 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_emptyStreet() {
 
-        String actual = AddressUtil.convert(new Address("", "Claremont", "California", 91711, "USA"));
+        String actual = addressUtil.convert(new Address("", "Claremont", "California", 91711, country));
 
-        assertEquals(", Claremont, California 91711, USA", actual);
+        assertEquals(", Claremont, California 91711, United States", actual);
     }
 
     @Test
@@ -108,7 +148,7 @@ public class AddressUtilTest {
 
         Address expected = new Address();
         expected.setStreet("4089 Chaminade Ct.");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., , ,");
+        Address actual = addressUtil.convert("4089 Chaminade Ct., , ,");
 
         assertEquals(expected, actual);
     }
@@ -116,7 +156,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_streetOnly() {
 
-        String actual = AddressUtil.convert(new Address("4089 Chaminade Ct.", null, null, null, null));
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", null, null, null, null));
 
         assertEquals("4089 Chaminade Ct., , ,", actual);
     }
@@ -124,8 +164,8 @@ public class AddressUtilTest {
     @Test
     public void test_convert_string_nullCity() {
 
-        Address expected = new Address("4089 Chaminade Ct.", null, "California", 91711, "USA");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., , California 91711, USA");
+        Address expected = new Address("4089 Chaminade Ct.", null, "California", 91711, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., , California 91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -133,16 +173,16 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_nullCity() {
 
-        String actual = AddressUtil.convert(new Address("4089 Chaminade Ct.", null, "California", 91711, "USA"));
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", null, "California", 91711, country));
 
-        assertEquals("4089 Chaminade Ct., , California 91711, USA", actual);
+        assertEquals("4089 Chaminade Ct., , California 91711, United States", actual);
     }
 
     @Test
     public void test_convert_string_emptyCity() {
 
-        Address expected = new Address("4089 Chaminade Ct.", "", "California", 91711, "USA");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., , California 91711, USA");
+        Address expected = new Address("4089 Chaminade Ct.", "", "California", 91711, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., , California 91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -150,9 +190,9 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_emptyCity() {
 
-        String actual = AddressUtil.convert(new Address("4089 Chaminade Ct.", "", "California", 91711, "USA"));
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", "", "California", 91711, country));
 
-        assertEquals("4089 Chaminade Ct., , California 91711, USA", actual);
+        assertEquals("4089 Chaminade Ct., , California 91711, United States", actual);
     }
 
     @Test
@@ -160,7 +200,7 @@ public class AddressUtilTest {
 
         Address expected = new Address();
         expected.setCity("Claremont");
-        Address actual = AddressUtil.convert(", Claremont, ,");
+        Address actual = addressUtil.convert(", Claremont, ,");
 
         assertEquals(expected, actual);
     }
@@ -168,7 +208,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_cityOnly() {
 
-        String actual = AddressUtil.convert(new Address(null, "Claremont", null, null, null));
+        String actual = addressUtil.convert(new Address(null, "Claremont", null, null, null));
 
         assertEquals(", Claremont, ,", actual);
     }
@@ -176,8 +216,8 @@ public class AddressUtilTest {
     @Test
     public void test_convert_string_nullState() {
 
-        Address expected = new Address("4089 Chaminade Ct.", "Claremont", null, 91711, "USA");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., Claremont,  91711, USA");
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", null, 91711, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont,  91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -185,16 +225,16 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_nullState() {
 
-        String actual = AddressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", null, 91711, "USA"));
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", null, 91711, country));
 
-        assertEquals("4089 Chaminade Ct., Claremont,  91711, USA", actual);
+        assertEquals("4089 Chaminade Ct., Claremont,  91711, United States", actual);
     }
 
     @Test
     public void test_convert_string_emptyState() {
 
-        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "", 91711, "USA");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., Claremont,  91711, USA");
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "", 91711, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont,  91711, United States");
 
         assertEquals(expected, actual);
     }
@@ -202,9 +242,9 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_emptyState() {
 
-        String actual = AddressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", "", 91711, "USA"));
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", "", 91711, country));
 
-        assertEquals("4089 Chaminade Ct., Claremont,  91711, USA", actual);
+        assertEquals("4089 Chaminade Ct., Claremont,  91711, United States", actual);
     }
 
     @Test
@@ -212,7 +252,7 @@ public class AddressUtilTest {
 
         Address expected = new Address();
         expected.setState("California");
-        Address actual = AddressUtil.convert(", , California,");
+        Address actual = addressUtil.convert(", , California,");
 
         assertEquals(expected, actual);
     }
@@ -220,9 +260,43 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_stateOnly() {
 
-        String actual = AddressUtil.convert(new Address(null, null, "California", null, null));
+        String actual = addressUtil.convert(new Address(null, null, "California", null, null));
 
         assertEquals(", , California,", actual);
+    }
+
+    @Test
+    public void test_convert_string_nullZip() {
+
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", null, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont,  91711, United States");
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void test_convert_address_nullZip() {
+
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", "California", null, country));
+
+        assertEquals("4089 Chaminade Ct., Claremont, California, United States", actual);
+    }
+
+    @Test
+    public void test_convert_string_emptyZip() {
+
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 0, country);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont,  91711, United States");
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void test_convert_address_emptyZip() {
+
+        String actual = addressUtil.convert(new Address("4089 Chaminade Ct.", "Claremont", "California", 0, country));
+
+        assertEquals("4089 Chaminade Ct., Claremont, California, United States", actual);
     }
 
     @Test
@@ -230,7 +304,7 @@ public class AddressUtilTest {
 
         Address expected = new Address();
         expected.setZip(91711);
-        Address actual = AddressUtil.convert(", ,  91711,");
+        Address actual = addressUtil.convert(", ,  91711,");
 
         assertEquals(expected, actual);
     }
@@ -238,7 +312,7 @@ public class AddressUtilTest {
     @Test
     public void test_convert_address_zipOnly() {
 
-        String actual = AddressUtil.convert(new Address(null, null, null, 91711, null));
+        String actual = addressUtil.convert(new Address(null, null, null, 91711, null));
 
         assertEquals(", ,  91711,", actual);
     }
@@ -247,7 +321,7 @@ public class AddressUtilTest {
     public void test_convert_string_nullCountry() {
 
         Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, null);
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., Claremont, California 91711,");
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont, California 91711,");
 
         assertEquals(expected, actual);
     }
@@ -258,14 +332,14 @@ public class AddressUtilTest {
         String expected = "4089 Chaminade Ct., Claremont, California 91711,";
         Address actual = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, null);
 
-        assertEquals(expected, AddressUtil.convert(actual));
+        assertEquals(expected, addressUtil.convert(actual));
     }
 
     @Test
     public void test_convert_string_emptyCountry() {
 
-        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, "");
-        Address actual = AddressUtil.convert("4089 Chaminade Ct., Claremont, California 91711,");
+        Address expected = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, null);
+        Address actual = addressUtil.convert("4089 Chaminade Ct., Claremont, California 91711,");
 
         assertEquals(expected, actual);
     }
@@ -274,8 +348,8 @@ public class AddressUtilTest {
     public void test_convert_address_emptyCountry() {
 
         String expected = "4089 Chaminade Ct., Claremont, California 91711,";
-        Address actual = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, "");
+        Address actual = new Address("4089 Chaminade Ct.", "Claremont", "California", 91711, new Country());
 
-        assertEquals(expected, AddressUtil.convert(actual));
+        assertEquals(expected, addressUtil.convert(actual));
     }
 }

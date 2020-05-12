@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bnp.id.model.info.Country;
 
 @Getter
 @Setter
@@ -20,7 +21,7 @@ public class Address {
 
     private Integer zip;
 
-    private String country;
+    private Country country;
 
     @Override
     public boolean equals(Object o) {
@@ -64,7 +65,7 @@ public class Address {
 
             if (isEqual && this.country != null && addr.getCountry() != null) {
                 isEqual = this.country.equals(addr.getCountry());
-            } else if (StringUtils.isNullOrEmpty(this.getCountry()) && StringUtils.isNullOrEmpty(addr.getCountry())) {
+            } else if (this.country == addr.getCountry()) {
                 isEqual = true;
             } else {
                 isEqual = false;

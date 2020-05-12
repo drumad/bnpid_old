@@ -1,20 +1,21 @@
 package org.bnp.id.service;
 
+import java.sql.SQLException;
 import java.util.Collection;
 
 public interface Service<T> {
 
-    T findbyId(Integer id);
+    T findById(Integer id);
 
-    Collection<T> findbyName(String name);
+    Collection<T> findByName(String name);
 
     Collection<T> findAll();
 
-    int save(T t);
+    int save(T t) throws SQLException;
 
-    void update(T t);
+    int update(T t) throws SQLException;
 
-    void deleteById(Integer id);
+    int deleteById(Integer id) throws SQLException;
 
     void deleteAll();
 

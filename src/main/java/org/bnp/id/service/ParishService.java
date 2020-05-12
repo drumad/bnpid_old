@@ -8,4 +8,6 @@ import java.util.Collection;
 public interface ParishService extends Service<Parish> {
 
     Collection<Parish> findByAddress(Address address);
+
+    Collection<Parish> findByAddress(String addr);
 }

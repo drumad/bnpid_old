@@ -1,15 +1,21 @@
 package org.bnp.id.util;
 
 import com.mysql.cj.util.StringUtils;
+import lombok.AllArgsConstructor;
 import org.bnp.id.constants.StringConstants;
+import org.bnp.id.controller.CountryController;
 import org.bnp.id.model.field.Address;
+import org.bnp.id.model.info.Country;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 public class AddressUtil {
 
-    public static Address convert(String value) {
+    private CountryController countryController;
+
+    public Address convert(String value) {
 
         if (StringUtils.isNullOrEmpty(value)) {
             return new Address();
@@ -22,21 +28,29 @@ public class AddressUtil {
             array = Arrays.copyOf(array, 4);
         }
 
-        String[] cityZip = array[2].split(" ");
-        String city;
+        int i = array.length - 1;
+
+        // Last element is the country
+        Country country = countryController.getCountries().get(array[i--]);
+
+        String[] stateZip = array[i--].split(" ");
+        String state;
         Integer zip;
         try {
-            city = Arrays.stream(Arrays.copyOf(cityZip, cityZip.length - 1)).collect(Collectors.joining(" "));
-            zip = Integer.valueOf(cityZip[cityZip.length - 1]);
+            state = Arrays.stream(Arrays.copyOf(stateZip, stateZip.length - 1)).collect(Collectors.joining(" "));
+            zip = Integer.valueOf(stateZip[stateZip.length - 1]);
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            city = Arrays.stream(cityZip).collect(Collectors.joining(" "));
-            zip = 0;
+            state = Arrays.stream(stateZip).collect(Collectors.joining(" "));
+            zip = null;
         }
 
-        return new Address(array[0], array[1], city, zip, array[3]);
+        String city = array[i];
+        String street = Arrays.stream(Arrays.copyOf(array, i)).collect(Collectors.joining(", "));
+
+        return new Address(street, city, state, zip, country);
     }
 
-    public static String convert(Address address) {
+    public String convert(Address address) {
 
         if (address == null) {
             address = new Address();
@@ -64,8 +78,8 @@ public class AddressUtil {
         }
         result.append(StringConstants.COMMA_SPACE);
 
-        if (!StringUtil.isNullOrEmpty(address.getCountry())) {
-            result.append(address.getCountry());
+        if (address.getCountry() != null && !StringUtils.isNullOrEmpty(address.getCountry().getNiceName())) {
+            result.append(address.getCountry().getNiceName());
         }
 
         return result.toString().trim();

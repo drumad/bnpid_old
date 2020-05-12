@@ -240,7 +240,7 @@ INSERT INTO `country` (`id`, `iso`, `name`, `nicename`, `iso3`, `numcode`, `phon
 (223, 'UA', 'UKRAINE', 'Ukraine', 'UKR', 804, 380),
 (224, 'AE', 'UNITED ARAB EMIRATES', 'United Arab Emirates', 'ARE', 784, 971),
 (225, 'GB', 'UNITED KINGDOM', 'United Kingdom', 'GBR', 826, 44),
-(226, 'US', 'UNITED STATES', 'United States', 'USA', 840, 1),
+(226, 'US', 'UNITED STATES', 'United States', 'USA', 840, 1),w
 (227, 'UM', 'UNITED STATES MINOR OUTLYING ISLANDS', 'United States Minor Outlying Islands', NULL, NULL, 1),
 (228, 'UY', 'URUGUAY', 'Uruguay', 'URY', 858, 598),
 (229, 'UZ', 'UZBEKISTAN', 'Uzbekistan', 'UZB', 860, 998),

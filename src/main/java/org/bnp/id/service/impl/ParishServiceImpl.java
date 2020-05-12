@@ -2,8 +2,6 @@ package org.bnp.id.service.impl;
 
 import com.mysql.cj.util.StringUtils;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import org.bnp.id.config.DBConfig;
 import org.bnp.id.constants.StringConstants;
@@ -22,17 +20,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Getter
-@Setter
 @AllArgsConstructor
-@Service
 @Log4j
+@Service
 public class ParishServiceImpl implements ParishService {
 
     private DBConfig config;
 
+    private AddressUtil addressUtil;
+
     @Override
-    public Parish findbyId(Integer id) {
+    public Parish findById(Integer id) {
 
         Parish ret = null;
 
@@ -60,7 +58,7 @@ public class ParishServiceImpl implements ParishService {
     }
 
     @Override
-    public Collection<Parish> findbyName(String name) {
+    public Collection<Parish> findByName(String name) {
 
         List<Parish> ret = new ArrayList<>();
 
@@ -124,7 +122,7 @@ public class ParishServiceImpl implements ParishService {
             stmt.setFetchSize(Integer.MIN_VALUE);
             StringBuffer sql = new StringBuffer();
             sql.append("SELECT * FROM `parish` WHERE `address` LIKE %");
-            sql.append(AddressUtil.convert(address)).append("%");
+            sql.append(addressUtil.convert(address)).append("%");
 
             ResultSet result = stmt.executeQuery(sql.toString());
             while (result.next()) {
@@ -142,7 +140,34 @@ public class ParishServiceImpl implements ParishService {
     }
 
     @Override
-    public int save(Parish parish) {
+    public Collection<Parish> findByAddress(String addr) {
+
+        List<Parish> ret = new ArrayList<>();
+
+        try (Connection con = config.getConnection()) {
+
+            Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            StringBuffer sql = new StringBuffer();
+            sql.append("SELECT * FROM `parish` WHERE `address` LIKE %").append(addr).append("%");
+
+            ResultSet result = stmt.executeQuery(sql.toString());
+            while (result.next()) {
+                ret.add(getParish(result));
+            }
+
+            result.close();
+            stmt.close();
+        } catch (SQLException e) {
+            log.error("Error " + e.getErrorCode() + " while attempting to get all parishes.", e);
+            throw new ParishNotFoundException();
+        }
+
+        return ret;
+    }
+
+    @Override
+    public int save(Parish parish) throws SQLException {
 
         int id = 0;
 
@@ -153,8 +178,8 @@ public class ParishServiceImpl implements ParishService {
 
             sql.append("INSERT INTO `parish` (`name`, `address`) values ('");
             sql.append(parish.getName()).append("', '");
-            sql.append(AddressUtil.convert(parish.getAddress()));
-            sql.append(")");
+            sql.append(addressUtil.convert(parish.getAddress()));
+            sql.append("')");
 
             log.debug("Query: " + sql.toString());
 
@@ -164,16 +189,20 @@ public class ParishServiceImpl implements ParishService {
                 id = rs.getInt(1);
             }
 
+            rs.close();
             stmt.close();
         } catch (SQLException e) {
             log.error("Error " + e.getErrorCode() + " while attempting to add parish (" + parish.toString() + "): " + e.getMessage(), e);
+            throw e;
         }
 
         return id;
     }
 
     @Override
-    public void update(Parish parish) {
+    public int update(Parish parish) throws SQLException {
+
+        int updated = 0;
 
         try (Connection con = config.getConnection()) {
 
@@ -183,20 +212,25 @@ public class ParishServiceImpl implements ParishService {
             sql.append("UPDATE `parish` SET ");
             sql.append("`name`='").append(parish.getName()).append("' ");
             sql.append(StringConstants.COMMA_SPACE);
-            sql.append("`address`='").append(AddressUtil.convert(parish.getAddress())).append("' ");
+            sql.append("`address`='").append(addressUtil.convert(parish.getAddress())).append("' ");
             sql.append("WHERE `id` = ").append(parish.getId());
 
             log.debug("Query: " + sql.toString());
 
-            stmt.executeUpdate(sql.toString());
+            updated = stmt.executeUpdate(sql.toString());
             stmt.close();
         } catch (SQLException e) {
             log.error("Error " + e.getErrorCode() + " while attempting to update parish (" + parish.toString() + "): " + e.getMessage(), e);
+            throw e;
         }
+
+        return updated;
     }
 
     @Override
-    public void deleteById(Integer id) {
+    public int deleteById(Integer id) throws SQLException {
+
+        int deleted = 0;
 
         try (Connection con = config.getConnection()) {
 
@@ -207,11 +241,14 @@ public class ParishServiceImpl implements ParishService {
 
             log.debug("Query: " + sql.toString());
 
-            stmt.executeUpdate(sql.toString());
+            deleted = stmt.executeUpdate(sql.toString());
             stmt.close();
         } catch (SQLException e) {
             log.error("Error " + e.getErrorCode() + " while attempting to delete parish with id (" + id + "): " + e.getMessage());
+            throw e;
         }
+
+        return deleted;
     }
 
     @Override
@@ -232,20 +269,22 @@ public class ParishServiceImpl implements ParishService {
                 sql.append("`id` = ").append(parish.getId());
             }
 
-            if (StringUtils.isNullOrEmpty(parish.getName())) {
+            if (!StringUtils.isNullOrEmpty(parish.getName())) {
                 if (!sql.toString().endsWith("WHERE ")) {
-                    sql.append("AND ");
+                    sql.append(" AND ");
                 }
-                sql.append("`name` = ").append(parish.getName());
+                sql.append("`name` = '").append(parish.getName()).append("'");
             }
 
-            String address = AddressUtil.convert(parish.getAddress());
-            if (StringUtils.isNullOrEmpty(address)) {
+            String address = addressUtil.convert(parish.getAddress());
+            if (!StringUtils.isNullOrEmpty(address)) {
                 if (!sql.toString().endsWith("WHERE ")) {
-                    sql.append("AND ");
+                    sql.append(" AND ");
                 }
-                sql.append("`address` = ").append(address);
+                sql.append("`address` = '").append(address).append("'");
             }
+
+            log.debug("Query = " + sql.toString());
 
             ResultSet rs = stmt.executeQuery(sql.toString());
 
@@ -254,7 +293,7 @@ public class ParishServiceImpl implements ParishService {
             rs.close();
             stmt.close();
         } catch (SQLException e) {
-            log.error("Error " + e.getErrorCode() + " while attempting to find parish " + parish.toString());
+            log.error("Error " + e.getErrorCode() + " while attempting to find parish " + parish.toString(), e);
         }
         return ret;
     }
@@ -265,9 +304,10 @@ public class ParishServiceImpl implements ParishService {
         ret = new Parish();
         ret.setId(result.getInt("id"));
         ret.setName(result.getString("name"));
-        ret.setAddress(AddressUtil.convert(result.getString("address")));
+        ret.setAddress(addressUtil.convert(result.getString("address")));
         ret.setDateCreated(result.getDate("date_created"));
         ret.setDateUpdated(result.getDate("date_updated"));
         return ret;
     }
 }
+
