@@ -24,6 +24,11 @@
         <constructor-arg name="addressUtil" ref="addressUtil"/>
     </bean>
 
+    <bean id="chapterService" class="org.bnp.id.service.impl.ChapterServiceImpl">
+        <constructor-arg name="config" ref="dbConfig"/>
+        <constructor-arg name="addressUtil" ref="addressUtil"/>
+    </bean>
+
     <bean id="countryService" class="org.bnp.id.service.impl.CountryServiceImpl">
         <constructor-arg name="config" ref="dbConfig"/>
     </bean>

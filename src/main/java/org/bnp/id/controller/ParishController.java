@@ -30,10 +30,14 @@ public class ParishController {
 
         this.parishService = parishService;
 
-        loadParishes();
+        try {
+            loadParishes();
+        } catch (SQLException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
-    public void loadParishes() {
+    public void loadParishes() throws SQLException {
 
         log.debug("Loading parishes..");
 
@@ -50,13 +54,13 @@ public class ParishController {
     }
 
     @GetMapping("/parish/{id}")
-    public Parish getParish(@PathVariable Integer id) {
+    public Parish getParish(@PathVariable Integer id) throws SQLException {
 
         return parishService.findById(id);
     }
 
     @GetMapping("/parish/{name}")
-    public Collection<Parish> getParish(@PathVariable String name) {
+    public Collection<Parish> getParish(@PathVariable String name) throws SQLException {
 
         return parishService.findByName(name);
     }
@@ -69,7 +73,7 @@ public class ParishController {
             if (parishes.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | SQLException e) {
             log.error(e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -83,11 +87,11 @@ public class ParishController {
         int id = Integer.MIN_VALUE;
         try {
             id = parishService.save(parish);
+            loadParishes();
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
         }
 
-        loadParishes();
 
         return new ResponseEntity<>(parishes.get(id), HttpStatus.OK);
     }
@@ -108,10 +112,9 @@ public class ParishController {
 
         try {
             parishService.deleteById(id);
+            loadParishes();
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
         }
-
-        loadParishes();
     }
 }

@@ -6,6 +6,7 @@ import org.bnp.id.model.info.Country;
 import org.bnp.id.service.CountryService;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,13 +25,17 @@ public class CountryController {
 
         this.countryService = countryService;
 
-        loadCountries();
+        try {
+            loadCountries();
+        } catch (SQLException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     /**
      * Loads all the countries from the database.
      */
-    public void loadCountries() {
+    public void loadCountries() throws SQLException {
 
         log.debug("Loading countries..");
 

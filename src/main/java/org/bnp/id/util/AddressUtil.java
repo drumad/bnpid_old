@@ -84,4 +84,27 @@ public class AddressUtil {
 
         return result.toString().trim();
     }
+
+    /**
+     * This should be used for display purposes only. Removes leading and trailing commas.
+     *
+     * @param stringAddress The address to clear commas from.
+     * @return The cleaned up string.
+     */
+    public String removeCommas(String stringAddress) {
+
+        stringAddress = stringAddress.replace(", , ,", ",").replace(", ,", ",");
+
+        if (stringAddress.startsWith(",")) {
+            stringAddress = stringAddress.replaceFirst(",", "");
+        }
+
+        if (stringAddress.endsWith(",")) {
+            StringBuffer buffer = new StringBuffer(stringAddress);
+            buffer.reverse().replace(0, 1, "");
+            stringAddress = buffer.reverse().toString();
+        }
+
+        return stringAddress.trim();
+    }
 }

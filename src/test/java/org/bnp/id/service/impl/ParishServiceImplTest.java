@@ -43,7 +43,7 @@ public class ParishServiceImplTest {
     private ResultSet rs;
 
     @Mock
-    private Statement stmt;
+    private PreparedStatement stmt;
 
     @Mock
     private CountryController countryController;
@@ -65,13 +65,14 @@ public class ParishServiceImplTest {
         Map<String, Country> map = new HashMap<>();
         map.put("Philippines", philippines);
         map.put("United States", usa);
-
         doReturn(map).when(countryController).getCountries();
         doReturn(con).when(config).getConnection();
-        doReturn(stmt).when(con).createStatement();
+        doReturn(stmt).when(con).prepareStatement(anyString());
+        doReturn(stmt).when(con).prepareStatement(anyString(), anyInt(), anyInt());
         doReturn(stmt).when(con).createStatement(anyInt(), anyInt());
         doReturn(rs).when(stmt).executeQuery(anyString());
-        doReturn(1).when(stmt).executeUpdate(anyString());
+        doReturn(rs).when(stmt).executeQuery();
+        doReturn(1).when(stmt).executeUpdate();
         doReturn(rs).when(stmt).getGeneratedKeys();
         when(rs.next()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(rs.getInt(anyInt())).thenReturn(7);
@@ -145,7 +146,8 @@ public class ParishServiceImplTest {
     @Test
     public void test_findByName_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement(anyInt(), anyInt());
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con)
+                                                                                 .prepareStatement(anyString(), anyInt(), anyInt());
 
         Assertions.assertThatThrownBy(() -> service.findByName("San")).isInstanceOf(ParishNotFoundException.class)
                   .hasMessage("Parish containing [San] in name was not found.");
@@ -236,7 +238,8 @@ public class ParishServiceImplTest {
     @Test
     public void test_findByAddress_string_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement(anyInt(), anyInt());
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con)
+                                                                                 .prepareStatement(anyString(), anyInt(), anyInt());
 
         Assertions.assertThatThrownBy(() -> service.findByAddress("any string")).isInstanceOf(ParishNotFoundException.class)
                   .hasMessage("No parish found!");
@@ -261,7 +264,7 @@ public class ParishServiceImplTest {
     @Test
     public void test_save_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement();
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).prepareStatement(anyString());
 
         Assertions.assertThatThrownBy(() -> service.save(new Parish())).isInstanceOf(SQLException.class);
     }
@@ -284,7 +287,7 @@ public class ParishServiceImplTest {
     @Test
     public void test_update_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement();
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).prepareStatement(anyString());
 
         Assertions.assertThatThrownBy(() -> service.update(new Parish())).isInstanceOf(SQLException.class);
 
@@ -311,7 +314,7 @@ public class ParishServiceImplTest {
     @Test
     public void test_deleteById_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement();
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).prepareStatement(anyString());
 
         Assertions.assertThatThrownBy(() -> service.deleteById(1)).isInstanceOf(SQLException.class);
 
@@ -335,7 +338,6 @@ public class ParishServiceImplTest {
 
     @Test
     public void test_isExists_success_exists() {
-
 
         Parish parish = new Parish();
 
@@ -361,7 +363,7 @@ public class ParishServiceImplTest {
     @Test
     public void test_isExists_exception() throws SQLException {
 
-        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).createStatement();
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).prepareStatement(anyString());
 
         assertFalse(service.isExists(new Parish()));
 

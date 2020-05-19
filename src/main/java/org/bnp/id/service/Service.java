@@ -5,11 +5,11 @@ import java.util.Collection;
 
 public interface Service<T> {
 
-    T findById(Integer id);
+    T findById(Integer id) throws SQLException;
 
-    Collection<T> findByName(String name);
+    Collection<T> findByName(String name) throws SQLException;
 
-    Collection<T> findAll();
+    Collection<T> findAll() throws SQLException;
 
     int save(T t) throws SQLException;
 
@@ -19,5 +19,5 @@ public interface Service<T> {
 
     void deleteAll();
 
-    boolean isExists(T t);
+    boolean isExists(T t) throws SQLException;
 }

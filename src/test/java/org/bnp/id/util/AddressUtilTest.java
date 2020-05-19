@@ -352,4 +352,34 @@ public class AddressUtilTest {
 
         assertEquals(expected, addressUtil.convert(actual));
     }
+
+    @Test
+    public void test_removeCommas_blankAddress() {
+
+        assertEquals("", addressUtil.removeCommas(", , ,"));
+    }
+
+    @Test
+    public void test_removeCommas_streetOnly() {
+
+        assertEquals("30 Acacia St., Juna Subd., Matina", addressUtil.removeCommas("30 Acacia St., Juna Subd., Matina, , ,"));
+    }
+
+    @Test
+    public void test_removeCommas_cityOnly() {
+
+        assertEquals("Davao City", addressUtil.removeCommas(", Davao City, ,"));
+    }
+
+    @Test
+    public void test_removeCommas_stateOnly() {
+
+        assertEquals("Davao del Sur", addressUtil.removeCommas(", , Davao del Sur,"));
+    }
+
+    @Test
+    public void test_removeCommas_countryOnly() {
+
+        assertEquals("Philippines", addressUtil.removeCommas(", , , Philippines"));
+    }
 }

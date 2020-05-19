@@ -4,7 +4,6 @@ import com.mysql.cj.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import org.bnp.id.config.DBConfig;
-import org.bnp.id.constants.StringConstants;
 import org.bnp.id.exception.ParishNotFoundException;
 import org.bnp.id.model.field.Address;
 import org.bnp.id.model.info.Parish;
@@ -12,10 +11,7 @@ import org.bnp.id.service.ParishService;
 import org.bnp.id.util.AddressUtil;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,11 +32,10 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("SELECT * FROM `parish` WHERE `id` = ").append(id);
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `parish` WHERE `id` = ?");
+            stmt.setInt(1, id);
 
-            ResultSet result = stmt.executeQuery(sql.toString());
+            ResultSet result = stmt.executeQuery();
             if (result.next()) {
                 ret = getParish(result);
             } else {
@@ -64,12 +59,12 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement stmt =
+                con.prepareStatement("SELECT * FROM `parish` WHERE `name` like ?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
-            StringBuffer sql = new StringBuffer();
-            sql.append("SELECT * FROM `parish` WHERE `name` like %").append(name).append("%");
+            stmt.setString(1, "%" + name + "%");
 
-            ResultSet result = stmt.executeQuery(sql.toString());
+            ResultSet result = stmt.executeQuery();
             while (result.next()) {
                 ret.add(getParish(result));
             }
@@ -118,13 +113,12 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `parish` WHERE `address` LIKE ?", ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
-            StringBuffer sql = new StringBuffer();
-            sql.append("SELECT * FROM `parish` WHERE `address` LIKE %");
-            sql.append(addressUtil.convert(address)).append("%");
+            stmt.setString(1, addressUtil.convert(address));
 
-            ResultSet result = stmt.executeQuery(sql.toString());
+            ResultSet result = stmt.executeQuery();
             while (result.next()) {
                 ret.add(getParish(result));
             }
@@ -146,12 +140,12 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `parish` WHERE `address` LIKE ?", ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
-            StringBuffer sql = new StringBuffer();
-            sql.append("SELECT * FROM `parish` WHERE `address` LIKE %").append(addr).append("%");
+            stmt.setString(1, "%" + addr + "%");
 
-            ResultSet result = stmt.executeQuery(sql.toString());
+            ResultSet result = stmt.executeQuery();
             while (result.next()) {
                 ret.add(getParish(result));
             }
@@ -173,17 +167,13 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
+            PreparedStatement stmt = con.prepareStatement("INSERT INTO `parish` (`name`, `address`) values (?, ?)");
+            stmt.setString(1, parish.getName());
+            stmt.setString(2, addressUtil.convert(parish.getAddress()));
 
-            sql.append("INSERT INTO `parish` (`name`, `address`) values ('");
-            sql.append(parish.getName()).append("', '");
-            sql.append(addressUtil.convert(parish.getAddress()));
-            sql.append("')");
+            log.debug("Query: " + stmt.toString());
 
-            log.debug("Query: " + sql.toString());
-
-            stmt.executeUpdate(sql.toString());
+            stmt.executeUpdate();
             ResultSet rs = stmt.getGeneratedKeys();
             if (rs.next()) {
                 id = rs.getInt(1);
@@ -192,7 +182,7 @@ public class ParishServiceImpl implements ParishService {
             rs.close();
             stmt.close();
         } catch (SQLException e) {
-            log.error("Error " + e.getErrorCode() + " while attempting to add parish (" + parish.toString() + "): " + e.getMessage(), e);
+            log.error("Error " + e.getErrorCode() + " while attempting to add parish (" + parish.getName() + "): " + e.getMessage(), e);
             throw e;
         }
 
@@ -206,18 +196,14 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
+            PreparedStatement stmt = con.prepareStatement("UPDATE `parish` SET `name` = ?, `address` = ? WHERE `id` = ?");
+            stmt.setString(1, parish.getName());
+            stmt.setString(2, addressUtil.convert(parish.getAddress()));
+            stmt.setInt(3, parish.getId());
 
-            sql.append("UPDATE `parish` SET ");
-            sql.append("`name`='").append(parish.getName()).append("' ");
-            sql.append(StringConstants.COMMA_SPACE);
-            sql.append("`address`='").append(addressUtil.convert(parish.getAddress())).append("' ");
-            sql.append("WHERE `id` = ").append(parish.getId());
+            log.debug("Query: " + stmt.toString());
 
-            log.debug("Query: " + sql.toString());
-
-            updated = stmt.executeUpdate(sql.toString());
+            updated = stmt.executeUpdate();
             stmt.close();
         } catch (SQLException e) {
             log.error("Error " + e.getErrorCode() + " while attempting to update parish (" + parish.toString() + "): " + e.getMessage(), e);
@@ -234,14 +220,12 @@ public class ParishServiceImpl implements ParishService {
 
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement();
-            StringBuffer sql = new StringBuffer();
-            sql.append("DELETE FROM `parish` ");
-            sql.append("WHERE `id` = ").append(id);
+            PreparedStatement stmt = con.prepareStatement("DELETE FROM `parish` WHERE `id` = ?");
+            stmt.setInt(1, id);
 
-            log.debug("Query: " + sql.toString());
+            log.debug("Query: " + stmt.toString());
 
-            deleted = stmt.executeUpdate(sql.toString());
+            deleted = stmt.executeUpdate();
             stmt.close();
         } catch (SQLException e) {
             log.error("Error " + e.getErrorCode() + " while attempting to delete parish with id (" + id + "): " + e.getMessage());
@@ -260,20 +244,27 @@ public class ParishServiceImpl implements ParishService {
     public boolean isExists(Parish parish) {
 
         boolean ret = false;
+        boolean idBool = false;
+        boolean nameBool = false;
+        boolean addressBool = false;
+
         try (Connection con = config.getConnection()) {
 
-            Statement stmt = con.createStatement();
             StringBuffer sql = new StringBuffer();
+            int paramIndex = 0;
+
             sql.append("SELECT * FROM `parish` WHERE ");
             if (parish.getId() != null && parish.getId() != 0) {
-                sql.append("`id` = ").append(parish.getId());
+                sql.append("`id` = ?");
+                idBool = true;
             }
 
             if (!StringUtils.isNullOrEmpty(parish.getName())) {
                 if (!sql.toString().endsWith("WHERE ")) {
                     sql.append(" AND ");
                 }
-                sql.append("`name` = '").append(parish.getName()).append("'");
+                sql.append("`name` = ?");
+                nameBool = true;
             }
 
             String address = addressUtil.convert(parish.getAddress());
@@ -281,10 +272,26 @@ public class ParishServiceImpl implements ParishService {
                 if (!sql.toString().endsWith("WHERE ")) {
                     sql.append(" AND ");
                 }
-                sql.append("`address` = '").append(address).append("'");
+                sql.append("`address` = ?");
+                addressBool = true;
             }
 
             log.debug("Query = " + sql.toString());
+
+            PreparedStatement stmt = con.prepareStatement(sql.toString());
+            if (idBool) {
+                stmt.setInt(++paramIndex, parish.getId());
+            }
+
+            if (nameBool) {
+                stmt.setString(++paramIndex, parish.getName());
+            }
+
+            if (addressBool) {
+                stmt.setString(++paramIndex, addressUtil.convert(parish.getAddress()));
+            }
+
+            log.debug("Query: " + stmt.toString());
 
             ResultSet rs = stmt.executeQuery(sql.toString());
 

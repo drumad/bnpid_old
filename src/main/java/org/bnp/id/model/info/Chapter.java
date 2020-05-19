@@ -16,9 +16,9 @@ public class Chapter {
 
     private Address location;
 
-    private Date start;
+    private Date started;
 
     private Date dateCreated;
 
-    private Date dateModified;
+    private Date dateUpdated;
 }
