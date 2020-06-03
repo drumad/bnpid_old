@@ -40,7 +40,7 @@ public class CountryServiceImpl implements CountryService {
 
             ResultSet result = stmt.executeQuery(sql.toString());
             if (result.next()) {
-                ret = getCountry(result);
+                ret = getObject(result);
             } else {
                 log.error("No country found with id " + id);
             }
@@ -68,7 +68,7 @@ public class CountryServiceImpl implements CountryService {
 
             ResultSet result = stmt.executeQuery(sql.toString());
             while (result.next()) {
-                ret.add(getCountry(result));
+                ret.add(getObject(result));
             }
 
             result.close();
@@ -94,7 +94,7 @@ public class CountryServiceImpl implements CountryService {
 
             ResultSet result = stmt.executeQuery(sql.toString());
             while (result.next()) {
-                ret.add(getCountry(result));
+                ret.add(getObject(result));
             }
 
             result.close();
@@ -126,6 +126,12 @@ public class CountryServiceImpl implements CountryService {
     }
 
     @Override
+    public int count() throws SQLException {
+
+        return 0;
+    }
+
+    @Override
     public void deleteAll() {
 
         throw new UnsupportedOperationException("delete function not allowed for Countries table");
@@ -137,7 +143,8 @@ public class CountryServiceImpl implements CountryService {
         return false;
     }
 
-    private Country getCountry(ResultSet result) throws SQLException {
+    @Override
+    public Country getObject(ResultSet result) throws SQLException {
 
         Country ret;
         ret = new Country();

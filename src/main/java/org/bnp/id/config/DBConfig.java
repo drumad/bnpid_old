@@ -34,9 +34,10 @@ public class DBConfig {
     private void createConnection() throws SQLException {
 
         try {
-            log.debug("Connecting to database..");
             Class.forName("com.mysql.cj.jdbc.Driver");
-            String url = String.format("jdbc:mysql://%s:%s/%s", host, port, db);
+            String url = String
+                .format("jdbc:mysql://%s:%s/%s?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", host,
+                    port, db);
             connection = DriverManager.getConnection(url, username, password);
         } catch (ClassNotFoundException e) {
             log.error(e.getMessage(), e);

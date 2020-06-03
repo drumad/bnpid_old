@@ -9,4 +9,6 @@ public interface StringConstants {
     String EMPTY = "";
 
     String SPACE = " ";
+
+    String PLUS = "+";
 }

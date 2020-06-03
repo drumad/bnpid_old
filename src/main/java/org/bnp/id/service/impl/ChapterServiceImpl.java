@@ -30,14 +30,12 @@ public class ChapterServiceImpl implements ChapterService {
 
         try (Connection con = config.getConnection()) {
 
-            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `chapter_info` WHERE `id` = ?");
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `chapter_info` WHERE chapter_id = ?");
             stmt.setInt(1, id);
-
-            log.debug("Query = " + stmt);
 
             ResultSet result = stmt.executeQuery();
             if (result.next()) {
-                ret = getChapter(result);
+                ret = getObject(result);
             } else {
                 log.error("No chapter found with id " + id);
             }
@@ -64,15 +62,16 @@ public class ChapterServiceImpl implements ChapterService {
 
         try (Connection con = config.getConnection()) {
 
-            PreparedStatement stmt = con.prepareStatement("SELECT * FROM `chapter_info` WHERE `name` like ?", ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement stmt =
+                con.prepareStatement("SELECT * FROM `chapter_info` WHERE `chapter_name` like ?", ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
             stmt.setString(1, "%" + name + "%");
 
             ResultSet result = stmt.executeQuery();
 
             while (result.next()) {
-                ret.add(getChapter(result));
+                ret.add(getObject(result));
             }
 
             result.close();
@@ -99,11 +98,11 @@ public class ChapterServiceImpl implements ChapterService {
             Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
             StringBuffer sql = new StringBuffer();
-            sql.append("SELECT * FROM `chapter`");
+            sql.append("SELECT * FROM `chapter_info`");
 
             ResultSet result = stmt.executeQuery(sql.toString());
             while (result.next()) {
-                ret.add(getChapter(result));
+                ret.add(getObject(result));
             }
 
             result.close();
@@ -127,7 +126,9 @@ public class ChapterServiceImpl implements ChapterService {
 
         try (Connection con = config.getConnection()) {
 
-            PreparedStatement stmt = con.prepareStatement("INSERT INTO `chapter_info` (`name`, `location`, `started`) values (?, ?, ?)");
+            PreparedStatement stmt =
+                con.prepareStatement("INSERT INTO `chapter_info` (`chapter_name`, `location`, `started`) values (?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, chapter.getName());
             stmt.setString(2, addressUtil.convert(chapter.getLocation()));
             stmt.setDate(3, new Date(chapter.getStarted().getTime()));
@@ -156,7 +157,8 @@ public class ChapterServiceImpl implements ChapterService {
 
         try (Connection con = config.getConnection()) {
 
-            PreparedStatement stmt = con.prepareStatement("UPDATE `chapter_info` SET `name`=?, `location`=?, `started`=? WHERE `id`=?");
+            PreparedStatement stmt =
+                con.prepareStatement("UPDATE `chapter_info` SET `chapter_name`=?, `location`=?, `started`=? WHERE chapter_id=?");
             stmt.setString(1, chapter.getName());
             stmt.setString(2, addressUtil.convert(chapter.getLocation()));
             stmt.setDate(3, new Date(chapter.getStarted().getTime()));
@@ -182,7 +184,7 @@ public class ChapterServiceImpl implements ChapterService {
 
         try (Connection con = config.getConnection()) {
 
-            PreparedStatement stmt = con.prepareStatement("DELETE FROM `chapter_info` WHERE `id`=?");
+            PreparedStatement stmt = con.prepareStatement("DELETE FROM `chapter_info` WHERE chapter_id=?");
             stmt.setInt(1, id);
 
             log.debug("Query = " + stmt.toString());
@@ -199,6 +201,30 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
+    public int count() throws SQLException {
+
+        int count = 0;
+
+        try (Connection con = config.getConnection()) {
+
+            PreparedStatement stmt = con.prepareStatement("SELECT count(*) FROM `chapter_info`");
+
+            ResultSet result = stmt.executeQuery();
+
+            if (result.next()) {
+                count = result.getInt(1);
+            }
+
+            result.close();
+            stmt.close();
+        } catch (SQLException e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+        return count;
+    }
+
+    @Override
     public void deleteAll() {
 
         // Don't do anything.
@@ -207,35 +233,34 @@ public class ChapterServiceImpl implements ChapterService {
     @Override
     public boolean isExists(Chapter chapter) throws SQLException {
 
-        boolean ret = false;
+        boolean exists;
         try (Connection con = config.getConnection()) {
 
             StringBuffer sql = new StringBuffer();
             sql.append("SELECT * FROM `chapter_info` WHERE ");
+            int originalLength = sql.length();
             if (chapter.getId() != null && chapter.getId() != 0) {
                 sql.append("`id` = ").append(chapter.getId());
             }
 
             if (!StringUtils.isNullOrEmpty(chapter.getName())) {
-                if (!sql.toString().endsWith("WHERE ")) {
-                    sql.append(" AND ");
-                }
-                sql.append("`name` = '").append(chapter.getName()).append("'");
+                appendAnd(sql, originalLength);
+                sql.append("`name` LIKE '%").append(chapter.getName()).append("%'");
             }
 
-            String address = addressUtil.convert(chapter.getLocation());
+            String address = addressUtil.removeCommas(addressUtil.convert(chapter.getLocation()));
             if (!StringUtils.isNullOrEmpty(address)) {
-                if (!sql.toString().endsWith("WHERE ")) {
-                    sql.append(" AND ");
-                }
-                sql.append("`location` = '").append(address).append("'");
+                appendAnd(sql, originalLength);
+                sql.append("`location` LIKE '%").append(address).append("%'");
             }
 
             if (chapter.getStarted() != null) {
-                if (!sql.toString().endsWith("WHERE ")) {
-                    sql.append(" AND ");
-                }
+                appendAnd(sql, originalLength);
                 sql.append("`started` = '").append(new Date(chapter.getStarted().getTime())).append("'");
+            }
+
+            if (sql.length() == originalLength) {
+                sql.delete(sql.indexOf("WHERE"), originalLength);
             }
 
             log.debug("Query = " + sql.toString());
@@ -243,7 +268,7 @@ public class ChapterServiceImpl implements ChapterService {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(sql.toString());
 
-            ret = rs.next();
+            exists = rs.next();
 
             rs.close();
             stmt.close();
@@ -253,7 +278,7 @@ public class ChapterServiceImpl implements ChapterService {
             throw e;
 
         }
-        return ret;
+        return exists;
     }
 
     @Override
@@ -271,7 +296,7 @@ public class ChapterServiceImpl implements ChapterService {
 
             ResultSet result = stmt.executeQuery();
             while (result.next()) {
-                ret.add(getChapter(result));
+                ret.add(getObject(result));
             }
 
             result.close();
@@ -288,12 +313,13 @@ public class ChapterServiceImpl implements ChapterService {
         return ret;
     }
 
-    private Chapter getChapter(ResultSet result) throws SQLException {
+    @Override
+    public Chapter getObject(ResultSet result) throws SQLException {
 
         Chapter ret;
         ret = new Chapter();
-        ret.setId(result.getInt("id"));
-        ret.setName(result.getString("name"));
+        ret.setId(result.getInt("chapter_id"));
+        ret.setName(result.getString("chapter_name"));
         ret.setLocation(addressUtil.convert(result.getString("location")));
         ret.setStarted(result.getDate("started"));
         ret.setDateCreated(result.getDate("date_created"));

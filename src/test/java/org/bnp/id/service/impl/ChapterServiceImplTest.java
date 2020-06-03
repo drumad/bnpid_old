@@ -78,6 +78,7 @@ public class ChapterServiceImplTest {
         doReturn(con).when(config).getConnection();
         doReturn(stmt).when(con).createStatement();
         doReturn(stmt).when(con).prepareStatement(anyString());
+        doReturn(stmt).when(con).prepareStatement(anyString(), anyInt());
         doReturn(stmt).when(con).prepareStatement(anyString(), anyInt(), anyInt());
         doReturn(stmt).when(con).createStatement(anyInt(), anyInt());
         doReturn(rs).when(stmt).executeQuery(anyString());
@@ -86,8 +87,8 @@ public class ChapterServiceImplTest {
         doReturn(rs).when(stmt).getGeneratedKeys();
         when(rs.next()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(rs.getInt(anyInt())).thenReturn(7);
-        when(rs.getInt("id")).thenReturn(1).thenReturn(2);
-        when(rs.getString("name")).thenReturn("Buhangin Chapter").thenReturn("Area Satellite 10");
+        when(rs.getInt("chapter_id")).thenReturn(1).thenReturn(2);
+        when(rs.getString("chapter_name")).thenReturn("Buhangin Chapter").thenReturn("Area Satellite 10");
         when(rs.getString("location")).thenReturn("Buhangin, Davao City, Davao del Sur 8021, Philippines")
                                       .thenReturn("San Pedro St., Poblacion District, Davao City, Davao del Sur, Philippines");
         when(rs.getDate("started")).thenReturn(today).thenReturn(yesterday);
@@ -237,7 +238,7 @@ public class ChapterServiceImplTest {
     @Test
     public void test_save_exception() throws SQLException {
 
-        doThrow(SQLException.class).when(con).prepareStatement(anyString());
+        doThrow(SQLException.class).when(con).prepareStatement(anyString(), anyInt());
         Assertions.assertThatThrownBy(() -> service.save(new Chapter())).isInstanceOf(SQLException.class);
 
         verify(rs, never()).close();
@@ -341,6 +342,58 @@ public class ChapterServiceImplTest {
     }
 
     @Test
+    public void test_isExists_noId_success() throws SQLException {
+
+        Chapter chapter = new Chapter();
+        chapter.setName("Inland Empire Chapter");
+        chapter.setLocation(new Address("", "Ontario", "California", 91761, usa));
+        chapter.setStarted(yesterday);
+
+        assertTrue(service.isExists(chapter));
+    }
+
+    @Test
+    public void test_isExists_noName_success() throws SQLException {
+
+        Chapter chapter = new Chapter();
+        chapter.setId(1);
+        chapter.setLocation(new Address("", "Ontario", "California", 91761, usa));
+        chapter.setStarted(yesterday);
+
+        assertTrue(service.isExists(chapter));
+    }
+
+    @Test
+    public void test_isExists_noLocation_success() throws SQLException {
+
+        Chapter chapter = new Chapter();
+        chapter.setId(1);
+        chapter.setName("Inland Empire Chapter");
+        chapter.setStarted(yesterday);
+
+        assertTrue(service.isExists(chapter));
+    }
+
+    @Test
+    public void test_isExists_noStarted_success() throws SQLException {
+
+        Chapter chapter = new Chapter();
+        chapter.setId(1);
+        chapter.setName("Inland Empire Chapter");
+        chapter.setLocation(new Address("", "Ontario", "California", 91761, usa));
+
+        assertTrue(service.isExists(chapter));
+    }
+
+    @Test
+    public void test_isExists_emptyChapter_success() throws SQLException {
+
+        Chapter chapter = new Chapter();
+
+        assertTrue(service.isExists(chapter));
+    }
+
+    @Test
     public void test_isExists_exception() throws SQLException {
 
         doThrow(SQLException.class).when(con).createStatement();
@@ -398,6 +451,26 @@ public class ChapterServiceImplTest {
         verify(stmt, never()).executeQuery();
 
         verify(rs, never()).close();
+        verify(stmt, never()).close();
+    }
+
+    @Test
+    public void test_count_success() throws SQLException {
+
+        int count = service.count();
+
+        assertEquals(7, count);
+    }
+
+    @Test
+    public void test_count_exception() throws SQLException {
+
+        doThrow(new SQLException("Unit test reason", "Unit test sqlState", 1000)).when(con).prepareStatement(anyString());
+
+        Assertions.assertThatThrownBy(() -> service.count()).isInstanceOf(SQLException.class);
+
+        verify(config, times(1)).getConnection();
+        verify(stmt, never()).executeUpdate(anyString());
         verify(stmt, never()).close();
     }
 }

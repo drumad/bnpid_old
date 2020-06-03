@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import org.bnp.id.model.info.Country;
 import org.bnp.id.service.CountryService;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.SQLException;
 import java.util.Collection;
@@ -13,14 +12,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Log4j
+@Getter
 public class CountryController {
 
-    @Getter
     private Map<String, Country> countries;
 
-    private CountryService countryService;
+    private final CountryService countryService;
 
-    @Autowired
     public CountryController(CountryService countryService) {
 
         this.countryService = countryService;

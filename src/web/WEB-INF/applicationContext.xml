@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util
+       http://www.springframework.org/schema/util/spring-util-2.5.xsd">
 
     <bean id="dbProperties" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
         <property name="location" value="classpath:conf/db.properties"/>
@@ -19,6 +21,10 @@
         <constructor-arg name="countryService" ref="countryService"/>
     </bean>
 
+    <bean id="chapterController" class="org.bnp.id.controller.ChapterController">
+        <constructor-arg name="chapterService" ref="chapterService"/>
+    </bean>
+
     <bean id="parishService" class="org.bnp.id.service.impl.ParishServiceImpl">
         <constructor-arg name="config" ref="dbConfig"/>
         <constructor-arg name="addressUtil" ref="addressUtil"/>
@@ -27,6 +33,14 @@
     <bean id="chapterService" class="org.bnp.id.service.impl.ChapterServiceImpl">
         <constructor-arg name="config" ref="dbConfig"/>
         <constructor-arg name="addressUtil" ref="addressUtil"/>
+    </bean>
+
+    <bean id="memberService" class="org.bnp.id.service.impl.MemberServiceImpl">
+        <constructor-arg name="config" ref="dbConfig"/>
+        <constructor-arg name="nameUtil" ref="nameUtil"/>
+        <constructor-arg name="addressUtil" ref="addressUtil"/>
+        <constructor-arg name="chapterService" ref="chapterService"/>
+        <constructor-arg name="parishService" ref="parishService"/>
     </bean>
 
     <bean id="countryService" class="org.bnp.id.service.impl.CountryServiceImpl">
@@ -39,5 +53,17 @@
 
     <bean id="addressUtil" class="org.bnp.id.util.AddressUtil">
         <constructor-arg name="countryController" ref="countryController"/>
+    </bean>
+
+    <bean id="nameUtil" class="org.bnp.id.util.NameUtil">
+        <property name="namePrefix">
+            <util:list id="namePrefix" value-type="java.lang.String">
+                <value>de</value>
+                <value>del</value>
+                <value>dela</value>
+                <value>la</value>
+                <value>san</value>
+            </util:list>
+        </property>
     </bean>
 </beans>

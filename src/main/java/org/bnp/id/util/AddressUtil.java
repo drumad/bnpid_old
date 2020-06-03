@@ -33,14 +33,19 @@ public class AddressUtil {
         // Last element is the country
         Country country = countryController.getCountries().get(array[i--]);
 
-        String[] stateZip = array[i--].split(" ");
+        String[] stateZip;
+        try {
+            stateZip = array[i--].split(" ");
+        } catch (NullPointerException e) {
+            stateZip = new String[] {"", ""};
+        }
         String state;
         Integer zip;
         try {
             state = Arrays.stream(Arrays.copyOf(stateZip, stateZip.length - 1)).collect(Collectors.joining(" "));
             zip = Integer.valueOf(stateZip[stateZip.length - 1]);
         } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-            state = Arrays.stream(stateZip).collect(Collectors.joining(" "));
+            state = Arrays.stream(stateZip).collect(Collectors.joining(" ")).trim();
             zip = null;
         }
 

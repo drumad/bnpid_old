@@ -3,6 +3,7 @@ package org.bnp.id.exception;
 public class ParishNotFoundException extends RuntimeException {
 
     public ParishNotFoundException() {
+
         super("No parish found!");
     }
 
@@ -12,6 +13,7 @@ public class ParishNotFoundException extends RuntimeException {
     }
 
     public ParishNotFoundException(String name) {
+
         super(String.format("Parish containing [%s] in name was not found.", name));
     }
 }
